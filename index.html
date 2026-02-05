@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pestastic - Contract Management System</title>
+  <meta name="description" content="Professional pest control contract and treatment management system">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Login Page -->
+  <div id="login-page" class="login-container">
+    <div class="login-card">
+      <div class="login-logo">🐛</div>
+      <h1 class="login-title">Pestastic</h1>
+      <p class="login-subtitle">Contract Management System</p>
+      
+      <div id="login-content">
+        <button class="google-btn" id="google-login-btn">
+          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign in with Google
+        </button>
+      </div>
+      
+      <div id="pending-approval" class="pending-message hidden">
+        <h3>⏳ Pending Approval</h3>
+        <p>Your account is awaiting administrator approval. You'll be able to access the system once approved.</p>
+        <button class="btn btn-outline mt-4" onclick="Auth.signOut()">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app-container" class="app-container hidden">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <div class="logo-icon">🐛</div>
+          <div class="logo-text">
+            <h1>Pestastic</h1>
+            <p>Contract Manager</p>
+          </div>
+        </div>
+      </div>
+      <nav class="nav-menu">
+        <div class="sidebar-user" id="sidebar-user">
+          <div class="sidebar-user-avatar" id="user-avatar">?</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="user-name">Loading...</div>
+            <div class="sidebar-user-role" id="user-role">User</div>
+          </div>
+        </div>
+        <ul id="nav-menu-items">
+          <li class="nav-item">
+            <button class="nav-button active" data-tab="dashboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              Dashboard
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="clients">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Clients
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="contracts">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Contracts
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="contract">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Contract
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="payments">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Payments
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="calendar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Calendar
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="schedule">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+              Schedule
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="renewal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Renewals
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="complaints">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Complaints
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="untreated">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Untreated / Overdue
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="inspections">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              Inspections
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="teams">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Teams
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-button" data-tab="updates">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+              Audit Log
+            </button>
+          </li>
+          <li class="nav-item admin-only hidden">
+            <button class="nav-button" data-tab="users">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
+              User Management
+            </button>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn btn-outline w-full mb-4" onclick="Auth.signOut()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </button>
+        <p>v4.0.0 • Firebase DB</p>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard -->
+      <div id="page-dashboard" class="page">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Dashboard</h2>
+            <p id="dashboard-timestamp">Overview of contracts, treatments, and business metrics</p>
+          </div>
+        </div>
+        <div class="stats-grid" id="dashboard-stats"></div>
+        <div class="quick-views" id="dashboard-quick-views"></div>
+      </div>
+
+      <!-- Clients Management -->
+      <div id="page-clients" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Client Management</h2>
+            <p>View and manage all clients</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn btn-secondary" onclick="UI.exportClientsCSV()">Export CSV</button>
+            <button class="btn btn-primary" onclick="UI.switchTab('contract')">New Client</button>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="clients-search" placeholder="Search by name, customer no, or phone...">
+            <span class="text-sm text-muted" id="clients-count">0 clients</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Customer No.</th>
+                  <th>Client Name</th>
+                  <th>Contact Person</th>
+                  <th>Phone</th>
+                  <th>Email</th>
+                  <th>Sales Agent</th>
+                  <th>Contracts</th>
+                  <th>Follow-Up</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="clients-table-body"></tbody>
+            </table>
+          </div>
+          <div id="clients-pagination" class="pagination"></div>
+        </div>
+      </div>
+
+      <!-- Contracts List -->
+      <div id="page-contracts" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>All Contracts</h2>
+            <p>View and manage all contracts</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn btn-secondary" onclick="UI.exportContractsCSV()">Export CSV</button>
+            <button class="btn btn-primary" onclick="UI.switchTab('contract')">New Contract</button>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="contracts-search" placeholder="Search by customer no or client name...">
+            <select id="contracts-status-filter" class="form-group" style="width: auto; min-width: 150px;">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+              <option value="renewed">Renewed</option>
+            </select>
+            <span class="text-sm text-muted" id="contracts-count">0 contracts</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Customer No.</th>
+                  <th>Contract #</th>
+                  <th>Client Name</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Amount</th>
+                  <th>Balance</th>
+                  <th>Warranty</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="contracts-table-body"></tbody>
+            </table>
+          </div>
+          <div id="contracts-pagination" class="pagination"></div>
+        </div>
+      </div>
+
+      <!-- New Contract Form -->
+      <div id="page-contract" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Contract Entry</h2>
+            <p>Create new client contracts and treatment plans</p>
+          </div>
+          <div class="page-header-actions">
+            <button type="button" class="btn btn-outline" id="reset-form-btn">Reset Form</button>
+          </div>
+        </div>
+
+        <form id="contract-form">
+          <!-- Client Selection -->
+          <div class="form-section">
+            <div class="form-section-title">Client Selection</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Client Type *</label>
+                <select id="client-type" required>
+                  <option value="">Select Type</option>
+                  <option value="new">New Client</option>
+                  <option value="existing">Existing Client</option>
+                </select>
+              </div>
+              <div class="form-group hidden" id="existing-client-group">
+                <label>Select Client *</label>
+                <select id="existing-client-select">
+                  <option value="">Search and select client...</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Client Profile -->
+          <div class="form-section" id="client-profile-section">
+            <div class="form-section-title">Client Profile</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Customer No.</label>
+                <input type="text" id="customer-no" readonly placeholder="Auto-generated">
+              </div>
+              <div class="form-group">
+                <label>Client / Company Name *</label>
+                <input type="text" id="client-name" required>
+              </div>
+              <div class="form-group">
+                <label>Contact Person *</label>
+                <input type="text" id="contact-person" required>
+              </div>
+              <div class="form-group">
+                <label>Contact Number *</label>
+                <input type="tel" id="contact-number" required>
+              </div>
+              <div class="form-group">
+                <label>Address *</label>
+                <input type="text" id="address" required>
+              </div>
+              <div class="form-group">
+                <label>Area Size</label>
+                <input type="text" id="area-size" placeholder="e.g., 200 sqm">
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email">
+              </div>
+              <div class="form-group">
+                <label>Source</label>
+                <select id="source">
+                  <option value="">Select Source</option>
+                  <option value="referral">Referral</option>
+                  <option value="walk-in">Walk-in</option>
+                  <option value="online">Online</option>
+                  <option value="advertisement">Advertisement</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pest Problem Selection -->
+          <div class="form-section">
+            <div class="form-section-title">Pest Problem Selection</div>
+            <div class="checkbox-group" id="pest-checkboxes"></div>
+          </div>
+
+          <!-- Contract Details -->
+          <div class="form-section">
+            <div class="form-section-title">Contract Details</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Sales Agent *</label>
+                <select id="sales-agent" required>
+                  <option value="">Select Agent</option>
+                  <option value="John">John</option>
+                  <option value="Omar">Omar</option>
+                  <option value="Alex">Alex</option>
+                  <option value="Marjorie">Marjorie</option>
+                  <option value="Eloiza">Eloiza</option>
+                  <option value="Minorca">Minorca</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Treatment Method *</label>
+                <select id="treatment-method" required>
+                  <option value="">Select Method</option>
+                  <option value="General Pest Control">General Pest Control</option>
+                  <option value="Termite Treatment">Termite Treatment</option>
+                  <option value="Rodent Control">Rodent Control</option>
+                  <option value="Fumigation">Fumigation</option>
+                  <option value="Mosquito Control">Mosquito Control</option>
+                  <option value="Bed Bug Treatment">Bed Bug Treatment</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Contract Length (Months) *</label>
+                <input type="number" id="contract-length" min="1" max="60" required>
+              </div>
+              <div class="form-group">
+                <label>Contract Start Date *</label>
+                <input type="date" id="contract-start" required>
+              </div>
+              <div class="form-group">
+                <label>Contract End Date</label>
+                <input type="date" id="contract-end" readonly>
+              </div>
+              <div class="form-group">
+                <label>Warranty Years</label>
+                <input type="number" id="warranty-years" min="1" max="10" value="1">
+              </div>
+            </div>
+          </div>
+
+          <!-- Treatment Schedule -->
+          <div class="form-section">
+            <div class="form-section-title">Treatment Schedule</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Treatment Frequency *</label>
+                <select id="treatment-frequency" required>
+                  <option value="">Select Frequency</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="bi-weekly">Bi-Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="bi-monthly">Bi-Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="semi-annually">Semi-Annually</option>
+                  <option value="annually">Annually</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Assigned Team</label>
+                <select id="assigned-team">
+                  <option value="">Select Team</option>
+                  <option value="team-1">Team 1</option>
+                  <option value="team-2">Team 2</option>
+                  <option value="team-3">Team 3</option>
+                  <option value="team-4">Team 4</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Preferred Time Slot</label>
+                <input type="text" id="time-slot" placeholder="e.g., 9:00 AM - 11:00 AM">
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary mt-4" onclick="UI.generateTreatments()">Generate Treatment Plan</button>
+            <div id="treatment-table-container" class="hidden mt-4">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Scheduled Date</th>
+                    <th>Time Slot</th>
+                    <th>Team</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="treatment-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Financial Details -->
+          <div class="form-section">
+            <div class="form-section-title">Financial Details</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Total Amount *</label>
+                <input type="number" id="total-amount" min="0" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label>Downpayment %</label>
+                <div class="slider-container">
+                  <input type="range" id="downpayment-percent" min="0" max="100" value="20">
+                  <span class="slider-value" id="downpayment-percent-display">20%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Downpayment Amount</label>
+                <input type="number" id="downpayment-amount" readonly>
+              </div>
+              <div class="form-group">
+                <label>Partial Payment (per treatment)</label>
+                <input type="number" id="partial-payment" readonly>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <div class="form-section">
+            <button type="submit" class="btn btn-primary btn-lg w-full">Save Contract</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Payments -->
+      <div id="page-payments" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Payments</h2>
+            <p>Track and manage all payments</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn btn-secondary" onclick="UI.exportPaymentsCSV()">Export CSV</button>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="payments-search" placeholder="Search by customer no, OR number...">
+            <select id="payments-status-filter" class="form-group" style="width: auto; min-width: 150px;">
+              <option value="">All Status</option>
+              <option value="Received">Received</option>
+              <option value="Remitted">Remitted</option>
+              <option value="Deposited">Deposited</option>
+            </select>
+            <span class="text-sm text-muted" id="payments-count">0 payments</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>OR Number</th>
+                  <th>Customer</th>
+                  <th>Amount</th>
+                  <th>Payment Date</th>
+                  <th>Type</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Received By</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="payments-table-body"></tbody>
+            </table>
+          </div>
+          <div id="payments-pagination" class="pagination"></div>
+        </div>
+      </div>
+
+      <!-- Calendar -->
+      <div id="page-calendar" class="page hidden">
+        <div class="calendar-container">
+          <div class="calendar-header">
+            <div class="calendar-nav">
+              <button class="btn btn-outline" onclick="UI.prevMonth()">←</button>
+              <span class="calendar-title" id="calendar-title">January 2025</span>
+              <button class="btn btn-outline" onclick="UI.nextMonth()">→</button>
+              <button class="btn btn-secondary" onclick="UI.goToToday()">Today</button>
+            </div>
+            <div class="calendar-filters">
+              <button class="filter-chip active" onclick="UI.setCalendarFilter('all', this)">All</button>
+              <button class="filter-chip completed" onclick="UI.setCalendarFilter('completed', this)">Completed</button>
+              <button class="filter-chip scheduled" onclick="UI.setCalendarFilter('scheduled', this)">Scheduled</button>
+              <button class="filter-chip lapsed" onclick="UI.setCalendarFilter('lapsed', this)">Lapsed</button>
+            </div>
+          </div>
+          <div class="team-filter-tabs" id="calendar-team-tabs">
+            <button class="team-filter-tab active" onclick="UI.setCalendarTeamFilter('all', this)">All Teams</button>
+            <button class="team-filter-tab" onclick="UI.setCalendarTeamFilter('team-1', this)">Team 1</button>
+            <button class="team-filter-tab" onclick="UI.setCalendarTeamFilter('team-2', this)">Team 2</button>
+            <button class="team-filter-tab" onclick="UI.setCalendarTeamFilter('team-3', this)">Team 3</button>
+            <button class="team-filter-tab" onclick="UI.setCalendarTeamFilter('team-4', this)">Team 4</button>
+          </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
+      </div>
+
+      <!-- Schedule Report -->
+      <div id="page-schedule" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Treatment Schedule</h2>
+            <p>View and manage scheduled treatments</p>
+          </div>
+        </div>
+        <div class="team-filter-tabs" id="schedule-team-tabs">
+          <button class="team-filter-tab active" onclick="UI.setScheduleTeamFilter('all', this)">All Teams</button>
+          <button class="team-filter-tab" onclick="UI.setScheduleTeamFilter('team-1', this)">Team 1</button>
+          <button class="team-filter-tab" onclick="UI.setScheduleTeamFilter('team-2', this)">Team 2</button>
+          <button class="team-filter-tab" onclick="UI.setScheduleTeamFilter('team-3', this)">Team 3</button>
+          <button class="team-filter-tab" onclick="UI.setScheduleTeamFilter('team-4', this)">Team 4</button>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="schedule-search" placeholder="Search by customer no or client name...">
+            <select id="schedule-date-filter" class="form-group" style="width: auto; min-width: 150px;">
+              <option value="">All Dates</option>
+              <option value="today">Today</option>
+              <option value="this-week">This Week</option>
+              <option value="this-month">This Month</option>
+            </select>
+            <select id="schedule-status-filter" class="form-group" style="width: auto; min-width: 150px;">
+              <option value="">All Status</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="Completed">Completed</option>
+              <option value="Lapsed">Lapsed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+            <span class="text-sm text-muted" id="schedule-count">0 treatments</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Customer No.</th>
+                  <th>Client</th>
+                  <th>Treatment #</th>
+                  <th>Scheduled Date</th>
+                  <th>Time</th>
+                  <th>Team</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-table-body"></tbody>
+            </table>
+          </div>
+          <div id="schedule-pagination" class="pagination"></div>
+        </div>
+      </div>
+
+      <!-- Renewals -->
+      <div id="page-renewal" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Contract Renewals</h2>
+            <p>Contracts due for renewal in the next 30 days</p>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="renewal-search" placeholder="Search by customer no or client name...">
+            <select id="renewal-status-filter" class="form-group" style="width: auto; min-width: 180px;">
+              <option value="">All Status</option>
+              <option value="Not Started">Not Started</option>
+              <option value="Awaiting Client Response">Awaiting Client Response</option>
+              <option value="Proposal Sent">Proposal Sent</option>
+              <option value="Renewed">Renewed</option>
+              <option value="Declined">Declined</option>
+            </select>
+            <span class="text-sm text-muted" id="renewal-count">0 renewals</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Customer No.</th>
+                  <th>Client Name</th>
+                  <th>End Date</th>
+                  <th>Amount</th>
+                  <th>Warranty</th>
+                  <th>Status</th>
+                  <th>Agent</th>
+                  <th>Source</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="renewal-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Complaints -->
+      <div id="page-complaints" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Complaints & Follow-ups</h2>
+            <p>Track and resolve customer issues</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn btn-primary" onclick="UI.openAddComplaintModal()">Add Complaint</button>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="complaints-search" placeholder="Search by customer no or description...">
+            <select id="complaints-priority-filter" class="form-group" style="width: auto; min-width: 150px;">
+              <option value="">All Priority</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+            <select id="complaints-status-filter" class="form-group" style="width: auto; min-width: 150px;">
+              <option value="">All Status</option>
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+            <span class="text-sm text-muted" id="complaints-count">0 complaints</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Description</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Assigned To</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="complaints-table-body"></tbody>
+            </table>
+          </div>
+          <div id="complaints-pagination" class="pagination"></div>
+        </div>
+      </div>
+
+      <!-- Untreated / Overdue -->
+      <div id="page-untreated" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Untreated / Overdue</h2>
+            <p>Treatments that are past their scheduled date</p>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="untreated-search" placeholder="Search by client name...">
+            <select id="untreated-reason-filter" class="form-group" style="width: auto; min-width: 180px;">
+              <option value="">All Reasons</option>
+              <option value="Client Not Available">Client Not Available</option>
+              <option value="Weather">Weather</option>
+              <option value="Technician Unavailable">Technician Unavailable</option>
+              <option value="Equipment Issue">Equipment Issue</option>
+            </select>
+            <span class="text-sm text-muted" id="untreated-count">0 overdue</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Treatment Type</th>
+                  <th>Scheduled Date</th>
+                  <th>Days Overdue</th>
+                  <th>Reason</th>
+                  <th>Contact</th>
+                  <th>Severity</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="untreated-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inspections -->
+      <div id="page-inspections" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Inspections</h2>
+            <p>Track site inspections and conversions</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn btn-primary" onclick="UI.openAddInspectionModal()">Add Inspection</button>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="inspections-search" placeholder="Search by client name or address...">
+            <select id="inspections-status-filter" class="form-group" style="width: auto; min-width: 150px;">
+              <option value="">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Completed">Completed</option>
+              <option value="Converted">Converted</option>
+              <option value="Lost">Lost</option>
+            </select>
+            <span class="text-sm text-muted" id="inspections-count">0 inspections</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Client Name</th>
+                  <th>Contact</th>
+                  <th>Address</th>
+                  <th>Inspected By</th>
+                  <th>Pest Problems</th>
+                  <th>Status</th>
+                  <th>Converted</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inspections-table-body"></tbody>
+            </table>
+          </div>
+          <div id="inspections-pagination" class="pagination"></div>
+        </div>
+      </div>
+
+      <!-- Teams -->
+      <div id="page-teams" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Teams Management</h2>
+            <p>Manage technician teams</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn btn-primary" onclick="UI.openAddTeamModal()">Add Team</button>
+          </div>
+        </div>
+        <div class="team-cards" id="teams-container"></div>
+      </div>
+
+      <!-- Audit Log -->
+      <div id="page-updates" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>Audit Log</h2>
+            <p>Track all changes and updates</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn btn-secondary" onclick="UI.exportAuditLogCSV()">Export CSV</button>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="updates-search" placeholder="Search by customer no, change type, or user...">
+            <select id="updates-type-filter" class="form-group" style="width: auto; min-width: 180px;">
+              <option value="">All Types</option>
+              <option value="Contract Created">Contract Created</option>
+              <option value="Contract Updated">Contract Updated</option>
+              <option value="Treatment Completed">Treatment Completed</option>
+              <option value="Treatment Rescheduled">Treatment Rescheduled</option>
+              <option value="Payment Recorded">Payment Recorded</option>
+              <option value="Client Updated">Client Updated</option>
+            </select>
+            <span class="text-sm text-muted" id="updates-count">0 updates</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date/Time</th>
+                  <th>Customer No.</th>
+                  <th>Change Type</th>
+                  <th>Old Value</th>
+                  <th>New Value</th>
+                  <th>Reason</th>
+                  <th>Updated By</th>
+                </tr>
+              </thead>
+              <tbody id="updates-table-body"></tbody>
+            </table>
+          </div>
+          <div id="updates-pagination" class="pagination"></div>
+        </div>
+      </div>
+
+      <!-- User Management (Admin Only) -->
+      <div id="page-users" class="page hidden">
+        <div class="page-header">
+          <div class="page-header-content">
+            <h2>User Management</h2>
+            <p>Approve, deny, and manage user access</p>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="search-bar">
+            <input type="text" class="form-group search-input" id="users-search" placeholder="Search by name or email...">
+            <select id="users-status-filter" class="form-group" style="width: auto; min-width: 150px;">
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="denied">Denied</option>
+            </select>
+            <span class="text-sm text-muted" id="users-count">0 users</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Avatar</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Registered</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="confirm-modal-title">Confirm Action</h3>
+        <button class="modal-close" onclick="UI.closeConfirmModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-modal-message">Are you sure you want to proceed?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeConfirmModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirm-modal-action">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Edit Modal -->
+  <div id="client-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Client</h3>
+        <button class="modal-close" onclick="UI.closeClientModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="client-edit-form">
+          <input type="hidden" id="edit-client-customer-no">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Client / Company Name *</label>
+              <input type="text" id="edit-client-name" required>
+            </div>
+            <div class="form-group">
+              <label>Contact Person *</label>
+              <input type="text" id="edit-contact-person" required>
+            </div>
+            <div class="form-group">
+              <label>Contact Number *</label>
+              <input type="tel" id="edit-contact-number" required>
+            </div>
+            <div class="form-group">
+              <label>Address *</label>
+              <input type="text" id="edit-address" required>
+            </div>
+            <div class="form-group">
+              <label>Area Size</label>
+              <input type="text" id="edit-area-size">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="edit-email">
+            </div>
+            <div class="form-group">
+              <label>Sales Agent</label>
+              <select id="edit-sales-agent">
+                <option value="">Select Agent</option>
+                <option value="John">John</option>
+                <option value="Omar">Omar</option>
+                <option value="Alex">Alex</option>
+                <option value="Marjorie">Marjorie</option>
+                <option value="Eloiza">Eloiza</option>
+                <option value="Minorca">Minorca</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeClientModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="UI.saveClientEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="payment-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Record Payment</h3>
+        <button class="modal-close" onclick="UI.closePaymentModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="payment-form">
+          <input type="hidden" id="payment-id">
+          <input type="hidden" id="payment-contract-id">
+          <input type="hidden" id="payment-customer-no">
+          
+          <div class="detail-grid mb-4">
+            <div class="detail-item">
+              <div class="detail-label">Customer</div>
+              <div class="detail-value" id="payment-customer-display">-</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Outstanding Balance</div>
+              <div class="detail-value" id="payment-outstanding">₱0.00</div>
+            </div>
+          </div>
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label>OR Number *</label>
+              <input type="text" id="payment-or-number" required>
+            </div>
+            <div class="form-group">
+              <label>Amount *</label>
+              <input type="number" id="payment-amount" min="0" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label>Payment Date *</label>
+              <input type="date" id="payment-date" required>
+            </div>
+            <div class="form-group">
+              <label>Payment Type *</label>
+              <select id="payment-type" required>
+                <option value="">Select Type</option>
+                <option value="cash">Cash</option>
+                <option value="check">Check</option>
+                <option value="gcash">GCash</option>
+                <option value="maya">Maya</option>
+                <option value="bank-transfer">Bank Transfer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Payment Status *</label>
+              <select id="payment-status" required>
+                <option value="Received">Received</option>
+                <option value="Remitted">Remitted</option>
+                <option value="Deposited">Deposited</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Received By *</label>
+              <select id="payment-received-by" required>
+                <option value="">Select Person</option>
+                <option value="Marjorie">Marjorie</option>
+                <option value="Omar">Omar</option>
+                <option value="John">John</option>
+                <option value="Eloiza">Eloiza</option>
+                <option value="Alex">Alex</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Service Rendered *</label>
+              <select id="payment-service" required>
+                <option value="">Select Service</option>
+                <option value="CIT">CIT (Contract Initial)</option>
+                <option value="GT">GT (General Treatment)</option>
+                <option value="FIC">FIC (Follow-up Initial)</option>
+                <option value="DP">DP (Downpayment)</option>
+                <option value="FP">FP (Full Payment)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="payment-notes" rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closePaymentModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="UI.savePayment()">Save Payment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Treatment Action Modal -->
+  <div id="treatment-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="treatment-modal-title">Treatment Action</h3>
+        <button class="modal-close" onclick="UI.closeTreatmentModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="treatment-action-form">
+          <input type="hidden" id="treatment-action-id">
+          <input type="hidden" id="treatment-action-type">
+          
+          <div class="detail-grid mb-4">
+            <div class="detail-item">
+              <div class="detail-label">Client</div>
+              <div class="detail-value" id="treatment-client-display">-</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Scheduled Date</div>
+              <div class="detail-value" id="treatment-date-display">-</div>
+            </div>
+          </div>
+          
+          <!-- Complete Fields -->
+          <div id="complete-fields" class="hidden">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Date Treated *</label>
+                <input type="date" id="complete-date">
+              </div>
+              <div class="form-group">
+                <label>Technician *</label>
+                <input type="text" id="complete-technician">
+              </div>
+              <div class="form-group">
+                <label>Chemical Used</label>
+                <input type="text" id="complete-chemical">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Notes</label>
+              <textarea id="complete-notes" rows="2"></textarea>
+            </div>
+          </div>
+          
+          <!-- Reschedule Fields -->
+          <div id="reschedule-fields" class="hidden">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>New Date *</label>
+                <input type="date" id="reschedule-date">
+              </div>
+              <div class="form-group">
+                <label>New Time Slot</label>
+                <input type="text" id="reschedule-time" placeholder="e.g., 9:00 AM">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Reason *</label>
+              <textarea id="reschedule-reason" rows="2"></textarea>
+            </div>
+          </div>
+          
+          <!-- Cancel Fields -->
+          <div id="cancel-fields" class="hidden">
+            <div class="form-group">
+              <label>Cancellation Reason *</label>
+              <textarea id="cancel-reason" rows="3"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeTreatmentModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="UI.executeTreatmentAction()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Complaint Modal -->
+  <div id="complaint-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="complaint-modal-title">Add Complaint</h3>
+        <button class="modal-close" onclick="UI.closeComplaintModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="complaint-form">
+          <input type="hidden" id="complaint-id">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Customer *</label>
+              <select id="complaint-customer" required>
+                <option value="">Select Customer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date Reported *</label>
+              <input type="date" id="complaint-date" required>
+            </div>
+            <div class="form-group">
+              <label>Priority *</label>
+              <select id="complaint-priority" required>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Assigned To</label>
+              <select id="complaint-assigned">
+                <option value="">Select Person</option>
+                <option value="John">John</option>
+                <option value="Omar">Omar</option>
+                <option value="Alex">Alex</option>
+                <option value="Marjorie">Marjorie</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description *</label>
+            <textarea id="complaint-description" rows="3" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Resolution Notes</label>
+            <textarea id="complaint-resolution" rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeComplaintModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="UI.saveComplaint()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inspection Modal -->
+  <div id="inspection-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="inspection-modal-title">Add Inspection</h3>
+        <button class="modal-close" onclick="UI.closeInspectionModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="inspection-form">
+          <input type="hidden" id="inspection-id">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Client Name *</label>
+              <input type="text" id="inspection-client-name" required>
+            </div>
+            <div class="form-group">
+              <label>Contact Number *</label>
+              <input type="tel" id="inspection-contact" required>
+            </div>
+            <div class="form-group">
+              <label>Inspection Date *</label>
+              <input type="date" id="inspection-date" required>
+            </div>
+            <div class="form-group">
+              <label>Inspected By *</label>
+              <select id="inspection-by" required>
+                <option value="">Select Person</option>
+                <option value="John">John</option>
+                <option value="Omar">Omar</option>
+                <option value="Alex">Alex</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Address *</label>
+            <input type="text" id="inspection-address" required>
+          </div>
+          <div class="form-group">
+            <label>Pest Problems</label>
+            <div class="checkbox-group" id="inspection-pest-checkboxes"></div>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="inspection-notes" rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeInspectionModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="UI.saveInspection()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Modal -->
+  <div id="team-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="team-modal-title">Add Team</h3>
+        <button class="modal-close" onclick="UI.closeTeamModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="team-form">
+          <input type="hidden" id="team-id">
+          <div class="form-group">
+            <label>Team Name *</label>
+            <input type="text" id="team-name" required>
+          </div>
+          <div class="form-group">
+            <label>Team Members</label>
+            <div id="team-members-container"></div>
+            <button type="button" class="btn btn-secondary btn-sm mt-4" onclick="UI.addTeamMemberField()">+ Add Member</button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeTeamModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="UI.saveTeam()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  
+  <!-- App Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
