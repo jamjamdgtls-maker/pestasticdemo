@@ -701,7 +701,7 @@ const DB = {
     }
   },
 
-// ===== FIXED DB.saveTeam: sanitize + always set timestamps =====
+  // ===== FIXED DB.saveTeam: sanitize + always set timestamps =====
   async saveTeam(team) {
     try {
       // Normalize members array to ensure no undefined fields
@@ -712,18 +712,27 @@ const DB = {
         };
       }) : [];
 
+      // Ensure we always have a valid timestamp
+      const now = new Date().toISOString();
+
       if (!team.id) {
         // New team - create complete object with guaranteed timestamps
         const newTeam = {
           id: this.generateId(),
           name: team.name || '',
           members: normalizedMembers,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          createdAt: now,
+          updatedAt: now
         };
 
         // Clean object to remove any undefined values
         const clean = this._cleanForFirebase(newTeam);
+        
+        // Double-check that createdAt is present
+        if (!clean.createdAt) {
+          clean.createdAt = now;
+        }
+        
         await database.ref(`teams/${newTeam.id}`).set(clean);
         return newTeam;
       } else {
@@ -731,21 +740,21 @@ const DB = {
         const snapshot = await database.ref(`teams/${team.id}`).once('value');
         const existingTeam = snapshot.val();
 
-        // FIX: Ensure createdAt is NEVER undefined
-        // Use existing createdAt if available, otherwise create new timestamp
-        const createdAtValue = (existingTeam && existingTeam.createdAt) 
-          ? existingTeam.createdAt 
-          : new Date().toISOString();
-
         const updatedTeam = {
           id: team.id,
           name: team.name || (existingTeam?.name || ''),
           members: normalizedMembers,
-          createdAt: createdAtValue,  // This is now guaranteed to be a string, never undefined
-          updatedAt: new Date().toISOString()
+          createdAt: existingTeam?.createdAt || now,
+          updatedAt: now
         };
 
         const clean = this._cleanForFirebase(updatedTeam);
+        
+        // Double-check that createdAt is present
+        if (!clean.createdAt) {
+          clean.createdAt = now;
+        }
+        
         await database.ref(`teams/${team.id}`).set(clean);
         return updatedTeam;
       }
@@ -890,19 +899,8 @@ const UI = {
   },
 
   async initDefaultTeams() {
-    const teams = await DB.getTeams();
-    if (teams.length === 0) {
-      const defaultTeams = [
-        { name: 'Team 1', members: [] },
-        { name: 'Team 2', members: [] },
-        { name: 'Team 3', members: [] },
-        { name: 'Team 4', members: [] }
-      ];
-      for (const team of defaultTeams) {
-        // Let DB.saveTeam populate timestamps and ids
-        await DB.saveTeam(team);
-      }
-    }
+    // Teams should be created manually by admin users
+    // No default teams will be auto-created
   },
 
   showLoading() {
