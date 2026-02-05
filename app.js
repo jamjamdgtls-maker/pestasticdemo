@@ -263,6 +263,28 @@ const DB = {
     return 'Scheduled';
   },
 
+  // Sanitizer to remove undefined properties before sending to Firebase
+  _cleanForFirebase(value) {
+    if (value === undefined) return null;
+    if (value === null) return null;
+    if (Array.isArray(value)) {
+      return value.map(v => this._cleanForFirebase(v));
+    }
+    if (typeof value === 'object') {
+      const out = {};
+      for (const k of Object.keys(value)) {
+        const v = value[k];
+        if (v === undefined) {
+          // skip undefined properties
+          continue;
+        }
+        out[k] = this._cleanForFirebase(v);
+      }
+      return out;
+    }
+    return value;
+  },
+
   // ===== USERS =====
   async getUser(uid) {
     try {
@@ -679,91 +701,55 @@ const DB = {
     }
   },
 
-// Replace the existing DB.saveTeam function with this corrected version:
+  // ===== FIXED DB.saveTeam: sanitize + always set timestamps =====
+  async saveTeam(team) {
+    try {
+      // Normalize members array to ensure no undefined fields
+      const normalizedMembers = Array.isArray(team.members) ? team.members.map(m => {
+        return {
+          name: m?.name ? String(m.name) : '',
+          role: m?.role ? String(m.role) : 'Technician'
+        };
+      }) : [];
 
-// ===== FIX 1: Replace DB.saveTeam (around line 569) =====
+      if (!team.id) {
+        // New team - create complete object with guaranteed timestamps
+        const newTeam = {
+          id: this.generateId(),
+          name: team.name || '',
+          members: normalizedMembers,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
 
-async saveTeam(team) {
-  try {
-    if (!team.id) {
-      // New team - create complete object
-      const newTeam = {
-        id: this.generateId(),
-        name: team.name,
-        members: team.members || [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      await database.ref(`teams/${newTeam.id}`).set(newTeam);
-      return newTeam;
-    } else {
-      // Existing team - fetch to preserve createdAt
-      const snapshot = await database.ref(`teams/${team.id}`).once('value');
-      const existingTeam = snapshot.val();
-      
-      const updatedTeam = {
-        id: team.id,
-        name: team.name,
-        members: team.members || [],
-        createdAt: existingTeam?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      await database.ref(`teams/${team.id}`).set(updatedTeam);
-      return updatedTeam;
-    }
-  } catch (error) {
-    console.error('Error saving team:', error);
-    throw error;
-  }
-}
+        // Clean object to remove any undefined values
+        const clean = this._cleanForFirebase(newTeam);
+        await database.ref(`teams/${newTeam.id}`).set(clean);
+        return newTeam;
+      } else {
+        // Existing team - fetch to preserve createdAt
+        const snapshot = await database.ref(`teams/${team.id}`).once('value');
+        const existingTeam = snapshot.val();
 
-// ===== FIX 2: Replace UI.saveTeam (around line 1460) =====
+        const updatedTeam = {
+          id: team.id,
+          name: team.name || (existingTeam?.name || ''),
+          members: normalizedMembers,
+          createdAt: existingTeam?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
 
-async saveTeam() {
-  const teamName = document.getElementById('team-name').value.trim();
-  if (!teamName) {
-    this.showToast('Please enter team name', 'error');
-    return;
-  }
-
-  this.showLoading();
-  try {
-    const teamId = document.getElementById('team-id').value;
-    const memberInputs = document.querySelectorAll('#team-members-container .form-grid');
-    const members = [];
-
-    memberInputs.forEach(div => {
-      const name = div.querySelector('.member-name').value.trim();
-      const role = div.querySelector('.member-role').value.trim();
-      if (name) {
-        members.push({ name, role: role || 'Technician' });
+        const clean = this._cleanForFirebase(updatedTeam);
+        await database.ref(`teams/${team.id}`).set(clean);
+        return updatedTeam;
       }
-    });
-
-    // Only pass id, name, and members - let DB.saveTeam handle timestamps
-    const team = {
-      name: teamName,
-      members
-    };
-    
-    // Only include id if editing existing team
-    if (teamId) {
-      team.id = teamId;
+    } catch (error) {
+      console.error('Error saving team:', error);
+      throw error;
     }
-
-    await DB.saveTeam(team);
-
-    this.closeTeamModal();
-    this.showToast(teamId ? 'Team updated' : 'Team created');
-    this.renderTeamsPage();
-  } catch (error) {
-    this.showToast('Error saving team: ' + error.message, 'error');
-  } finally {
-    this.hideLoading();
   }
-}
 
+  ,
   async deleteTeam(id) {
     try {
       await database.ref(`teams/${id}`).remove();
@@ -907,7 +893,7 @@ const UI = {
         { name: 'Team 4', members: [] }
       ];
       for (const team of defaultTeams) {
-        team.createdAt = new Date().toISOString();
+        // Let DB.saveTeam populate timestamps and ids
         await DB.saveTeam(team);
       }
     }
@@ -2676,6 +2662,7 @@ const UI = {
     container.appendChild(memberDiv);
   },
 
+  // ===== FIXED UI.saveTeam: normalize members & omit id on create =====
   async saveTeam() {
     const teamName = document.getElementById('team-name').value.trim();
     if (!teamName) {
@@ -2690,18 +2677,22 @@ const UI = {
       const members = [];
 
       memberInputs.forEach(div => {
-        const name = div.querySelector('.member-name').value.trim();
-        const role = div.querySelector('.member-role').value.trim();
+        const name = (div.querySelector('.member-name')?.value || '').trim();
+        const role = (div.querySelector('.member-role')?.value || '').trim();
         if (name) {
           members.push({ name, role: role || 'Technician' });
         }
       });
 
+      // Build team payload: don't include id when creating new (let DB.generateId handle it)
       const team = {
-        id: teamId || null,
         name: teamName,
         members
       };
+
+      if (teamId) {
+        team.id = teamId;
+      }
 
       await DB.saveTeam(team);
 
@@ -2710,6 +2701,7 @@ const UI = {
       this.renderTeamsPage();
     } catch (error) {
       this.showToast('Error saving team: ' + error.message, 'error');
+      console.error('Error saving team:', error);
     } finally {
       this.hideLoading();
     }
