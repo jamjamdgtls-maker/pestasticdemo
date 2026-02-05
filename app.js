@@ -682,10 +682,21 @@ const DB = {
   async saveTeam(team) {
     try {
       if (!team.id) {
+        // New team
         team.id = this.generateId();
+        team.createdAt = new Date().toISOString();
+        team.updatedAt = new Date().toISOString();
+        await database.ref(`teams/${team.id}`).set(team);
+      } else {
+        // Existing team - use update to preserve createdAt
+        const updates = {
+          name: team.name,
+          members: team.members,
+          updatedAt: new Date().toISOString()
+        };
+        await database.ref(`teams/${team.id}`).update(updates);
+        team = { ...team, ...updates };
       }
-      team.updatedAt = new Date().toISOString();
-      await database.ref(`teams/${team.id}`).set(team);
       return team;
     } catch (error) {
       console.error('Error saving team:', error);
@@ -2631,17 +2642,6 @@ const UI = {
         name: teamName,
         members
       };
-
-      // Only set createdAt for new teams
-      if (!teamId) {
-        team.createdAt = new Date().toISOString();
-      } else {
-        // For updates, get existing createdAt
-        const existingTeam = await DB.getTeamById(teamId);
-        if (existingTeam && existingTeam.createdAt) {
-          team.createdAt = existingTeam.createdAt;
-        }
-      }
 
       await DB.saveTeam(team);
 
