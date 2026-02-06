@@ -154,14 +154,16 @@ const Auth = {
   },
 
   updateAdminFeatures() {
-    const isAdmin = this.currentUserData?.role === 'admin';
+    const role = this.currentUserData?.role;
+    const isAdmin = role === 'admin' || role === 'super_admin';
     document.querySelectorAll('.admin-only').forEach(el => {
       el.classList.toggle('hidden', !isAdmin);
     });
   },
 
   isAdmin() {
-    return this.currentUserData?.role === 'admin';
+    const role = this.currentUserData?.role;
+    return role === 'admin' || role === 'super_admin';
   },
 
   getCurrentUserName() {
@@ -903,6 +905,57 @@ const UI = {
     // No default teams will be auto-created
   },
 
+  async loadTeamsToDropdown(selectId, includeEmpty = true) {
+    try {
+      const teams = await DB.getTeams();
+      const select = document.getElementById(selectId);
+      if (!select) return;
+      
+      if (includeEmpty) {
+        select.innerHTML = '<option value="">Select Team</option>';
+      } else {
+        select.innerHTML = '';
+      }
+      
+      teams.forEach(team => {
+        const option = document.createElement('option');
+        option.value = team.id;
+        option.textContent = team.name;
+        select.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error loading teams to dropdown:', error);
+    }
+  },
+
+  async loadTeamTabs(containerId, filterFunction, filterPrefix) {
+    try {
+      const teams = await DB.getTeams();
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      
+      // Keep the "All Teams" button
+      const allButton = container.querySelector('.team-filter-tab.active') || 
+                       container.querySelector('.team-filter-tab');
+      
+      // Clear all but first button
+      while (container.children.length > 1) {
+        container.removeChild(container.lastChild);
+      }
+      
+      // Add team buttons
+      teams.forEach(team => {
+        const button = document.createElement('button');
+        button.className = 'team-filter-tab';
+        button.textContent = team.name;
+        button.onclick = () => filterFunction(team.id, button);
+        container.appendChild(button);
+      });
+    } catch (error) {
+      console.error('Error loading team tabs:', error);
+    }
+  },
+
   showLoading() {
     document.getElementById('loading-overlay').classList.remove('hidden');
   },
@@ -978,9 +1031,11 @@ const UI = {
         this.renderPaymentsPage();
         break;
       case 'calendar':
+        this.loadTeamTabs('calendar-team-tabs', this.setCalendarTeamFilter.bind(this), 'calendar');
         this.renderCalendar();
         break;
       case 'schedule':
+        this.loadTeamTabs('schedule-team-tabs', this.setScheduleTeamFilter.bind(this), 'schedule');
         this.renderScheduleReport();
         break;
       case 'renewal':
@@ -1900,6 +1955,9 @@ const UI = {
       } else if (actionType === 'reschedule') {
         document.getElementById('treatment-modal-title').textContent = 'Reschedule Treatment';
         document.getElementById('reschedule-fields').classList.remove('hidden');
+        // Populate teams dropdown for rescheduling
+        await this.loadTeamsToDropdown('reschedule-team', true);
+        document.getElementById('reschedule-team').value = treatment.teamId || '';
       } else if (actionType === 'cancel') {
         document.getElementById('treatment-modal-title').textContent = 'Cancel Treatment';
         document.getElementById('cancel-fields').classList.remove('hidden');
@@ -1952,6 +2010,7 @@ const UI = {
       } else if (actionType === 'reschedule') {
         const newDate = document.getElementById('reschedule-date').value;
         const reason = document.getElementById('reschedule-reason').value;
+        const newTeamId = document.getElementById('reschedule-team').value;
         
         if (!newDate || !reason) {
           this.showToast('Please fill in new date and reason', 'error');
@@ -1959,9 +2018,27 @@ const UI = {
         }
 
         const oldDate = treatment.dateScheduled;
+        const oldTeamId = treatment.teamId || '';
+        
         treatment.dateScheduled = newDate;
         treatment.timeSlot = document.getElementById('reschedule-time').value;
         treatment.statusReason = reason;
+        
+        // Update team if changed
+        if (newTeamId && newTeamId !== oldTeamId) {
+          treatment.teamId = newTeamId;
+          const teams = await DB.getTeams();
+          const newTeam = teams.find(t => t.id === newTeamId);
+          const oldTeam = teams.find(t => t.id === oldTeamId);
+          
+          await DB.saveContractUpdate({
+            customerNo: treatment.customerNo,
+            changeType: 'Treatment Team Changed',
+            oldValue: oldTeam?.name || 'Unassigned',
+            newValue: newTeam?.name || 'Unassigned',
+            reason: 'During reschedule'
+          });
+        }
 
         await DB.saveContractUpdate({
           customerNo: treatment.customerNo,
@@ -2239,6 +2316,9 @@ const UI = {
     customerSelect.innerHTML = `<option value="">Select Customer</option>` +
       clients.map(c => `<option value="${c.customerNo}">${c.customerNo} - ${c.clientName}</option>`).join('');
 
+    // Populate teams dropdown
+    await this.loadTeamsToDropdown('complaint-assigned', true);
+
     document.getElementById('complaint-modal').classList.remove('hidden');
   },
 
@@ -2260,9 +2340,12 @@ const UI = {
       customerSelect.innerHTML = `<option value="">Select Customer</option>` +
         clients.map(c => `<option value="${c.customerNo}" ${c.customerNo === complaint.customerNo ? 'selected' : ''}>${c.customerNo} - ${c.clientName}</option>`).join('');
 
+      // Populate teams dropdown
+      await this.loadTeamsToDropdown('complaint-assigned', true);
+      document.getElementById('complaint-assigned').value = complaint.assignedTo || '';
+
       document.getElementById('complaint-date').value = complaint.dateReported || '';
       document.getElementById('complaint-priority').value = complaint.priorityLevel || 'Low';
-      document.getElementById('complaint-assigned').value = complaint.assignedTo || '';
       document.getElementById('complaint-description').value = complaint.description || '';
       document.getElementById('complaint-resolution').value = complaint.resolutionNotes || '';
 
@@ -2449,11 +2532,15 @@ const UI = {
     }
   },
 
-  openAddInspectionModal() {
+  async openAddInspectionModal() {
     document.getElementById('inspection-id').value = '';
     document.getElementById('inspection-modal-title').textContent = 'Add Inspection';
     document.getElementById('inspection-form').reset();
     document.getElementById('inspection-date').value = new Date().toISOString().split('T')[0];
+    
+    // Populate teams dropdown
+    await this.loadTeamsToDropdown('inspection-by', true);
+    
     document.getElementById('inspection-modal').classList.remove('hidden');
   },
 
@@ -2471,9 +2558,12 @@ const UI = {
       document.getElementById('inspection-client-name').value = inspection.clientName || '';
       document.getElementById('inspection-contact').value = inspection.contactNumber || '';
       document.getElementById('inspection-date').value = inspection.inspectionDate || '';
-      document.getElementById('inspection-by').value = inspection.inspectedBy || '';
       document.getElementById('inspection-address').value = inspection.address || '';
       document.getElementById('inspection-notes').value = inspection.notes || '';
+
+      // Populate teams dropdown
+      await this.loadTeamsToDropdown('inspection-by', true);
+      document.getElementById('inspection-by').value = inspection.inspectedBy || '';
 
       // Check pest problems
       const pests = Array.isArray(inspection.pestProblems) ? inspection.pestProblems : [];
