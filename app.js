@@ -767,54 +767,64 @@ const DB = {
   }
 
   ,
-  async deleteTeam(id) {
-    try {
-      await database.ref(`teams/${id}`).remove();
-    } catch (error) {
-      console.error('Error deleting team:', error);
-      throw error;
+// --- DB.deleteTeam: require admin ---
+async deleteTeam(id) {
+  try {
+    if (!Auth.isAdmin()) {
+      console.warn('deleteTeam blocked: current user is not admin', id);
+      throw new Error('Unauthorized: only admins can delete teams');
     }
-  },
+    await database.ref(`teams/${id}`).remove();
+  } catch (error) {
+    console.error('Error deleting team:', error);
+    throw error;
+  }
+},
 
-  // ===== RENEWALS =====
-  async getRenewals() {
-    try {
-      const snapshot = await database.ref('renewals').once('value');
-      const data = snapshot.val() || {};
-      return Object.values(data);
-    } catch (error) {
-      console.error('Error getting renewals:', error);
-      return [];
-    }
-  },
+// --- UI.saveTeam: client-side guard for admin ---
+async saveTeam() {
+  // Prevent non-admins from even attempting to save
+  if (!Auth.isAdmin()) {
+    this.showToast('Only administrators can create or edit teams', 'error');
+    return;
+  }
 
-  async getRenewalByContractId(contractId) {
-    try {
-      const snapshot = await database.ref('renewals').orderByChild('contractId').equalTo(contractId).once('value');
-      const data = snapshot.val();
-      if (data) {
-        return Object.values(data)[0];
+  const teamName = document.getElementById('team-name').value.trim();
+  if (!teamName) {
+    this.showToast('Please enter team name', 'error');
+    return;
+  }
+
+  this.showLoading();
+  try {
+    const teamId = document.getElementById('team-id').value;
+    const memberInputs = document.querySelectorAll('#team-members-container .form-grid');
+    const members = [];
+
+    memberInputs.forEach(div => {
+      const name = (div.querySelector('.member-name')?.value || '').trim();
+      const role = (div.querySelector('.member-role')?.value || '').trim();
+      if (name) {
+        members.push({ name, role: role || 'Technician' });
       }
-      return null;
-    } catch (error) {
-      console.error('Error getting renewal:', error);
-      return null;
-    }
-  },
+    });
 
-  async saveRenewal(renewal) {
-    try {
-      if (!renewal.id) {
-        renewal.id = this.generateId();
-      }
-      renewal.updatedAt = new Date().toISOString();
-      await database.ref(`renewals/${renewal.id}`).set(renewal);
-      return renewal;
-    } catch (error) {
-      console.error('Error saving renewal:', error);
-      throw error;
-    }
-  },
+    // Build team payload: don't include id when creating new (let DB.generateId handle it)
+    const team = { name: teamName, members };
+    if (teamId) team.id = teamId;
+
+    await DB.saveTeam(team);
+
+    this.closeTeamModal();
+    this.showToast(teamId ? 'Team updated' : 'Team created');
+    this.renderTeamsPage();
+  } catch (error) {
+    this.showToast('Error saving team: ' + error.message, 'error');
+    console.error('Error saving team:', error);
+  } finally {
+    this.hideLoading();
+  }
+},
 
   // ===== CONTRACT UPDATES (AUDIT LOG) =====
   async getContractUpdates() {
@@ -900,16 +910,13 @@ const UI = {
     this.initDefaultTeams();
   },
 
-  async initDefaultTeams() {
-    // Intentionally do NOT seed or auto-create any teams on startup.
-    // Teams should be created by an administrator through the front-end (Teams modal).
-    // No-op to avoid accidental creation.
-    try {
-      return;
-    } catch (e) {
-      console.warn('initDefaultTeams no-op', e);
-    }
-  },
+// --- Defensive: initDefaultTeams (no-op) ---
+async initDefaultTeams() {
+  // Intentionally do NOT seed or auto-create any teams on startup.
+  // Teams must be created manually via the UI by an admin.
+  console.log('initDefaultTeams: no-op (no seeding will occur)');
+  return;
+},
 
   async loadTeamsToDropdown(selectId, includeEmpty = true) {
     try {
@@ -2779,50 +2786,62 @@ const UI = {
     container.appendChild(memberDiv);
   },
 
-  // ===== FIXED UI.saveTeam: normalize members & omit id on create =====
-  async saveTeam() {
-    const teamName = document.getElementById('team-name').value.trim();
-    if (!teamName) {
-      this.showToast('Please enter team name', 'error');
-      return;
+// --- DB.saveTeam: require admin + validate payload ---
+async saveTeam(team) {
+  try {
+    // Only allow admins to create/update teams from the client
+    if (!Auth.isAdmin()) {
+      console.warn('saveTeam blocked: current user is not admin', team);
+      throw new Error('Unauthorized: only admins can create or update teams');
     }
 
-    this.showLoading();
-    try {
-      const teamId = document.getElementById('team-id').value;
-      const memberInputs = document.querySelectorAll('#team-members-container .form-grid');
-      const members = [];
+    // Basic validation: team must have a non-empty name
+    if (!team || !String(team.name || '').trim()) {
+      throw new Error('Invalid team payload: missing team name');
+    }
 
-      memberInputs.forEach(div => {
-        const name = (div.querySelector('.member-name')?.value || '').trim();
-        const role = (div.querySelector('.member-role')?.value || '').trim();
-        if (name) {
-          members.push({ name, role: role || 'Technician' });
-        }
-      });
-
-      // Build team payload: don't include id when creating new (let DB.generateId handle it)
-      const team = {
-        name: teamName,
-        members
+    // Normalize members array to ensure no undefined fields
+    const normalizedMembers = Array.isArray(team.members) ? team.members.map(m => {
+      return {
+        name: m?.name ? String(m.name) : '',
+        role: m?.role ? String(m.role) : 'Technician'
       };
+    }) : [];
 
-      if (teamId) {
-        team.id = teamId;
-      }
+    const now = new Date().toISOString();
 
-      await DB.saveTeam(team);
-
-      this.closeTeamModal();
-      this.showToast(teamId ? 'Team updated' : 'Team created');
-      this.renderTeamsPage();
-    } catch (error) {
-      this.showToast('Error saving team: ' + error.message, 'error');
-      console.error('Error saving team:', error);
-    } finally {
-      this.hideLoading();
+    if (!team.id) {
+      const newTeam = {
+        id: this.generateId(),
+        name: team.name || '',
+        members: normalizedMembers,
+        createdAt: now,
+        updatedAt: now
+      };
+      const clean = this._cleanForFirebase(newTeam);
+      if (!clean.createdAt) clean.createdAt = now;
+      await database.ref(`teams/${newTeam.id}`).set(clean);
+      return newTeam;
+    } else {
+      const snapshot = await database.ref(`teams/${team.id}`).once('value');
+      const existingTeam = snapshot.val();
+      const updatedTeam = {
+        id: team.id,
+        name: team.name || (existingTeam?.name || ''),
+        members: normalizedMembers,
+        createdAt: existingTeam?.createdAt || now,
+        updatedAt: now
+      };
+      const clean = this._cleanForFirebase(updatedTeam);
+      if (!clean.createdAt) clean.createdAt = now;
+      await database.ref(`teams/${team.id}`).set(clean);
+      return updatedTeam;
     }
-  },
+  } catch (error) {
+    console.error('Error saving team:', error);
+    throw error;
+  }
+},
 
   async deleteTeam(teamId) {
     this.showConfirm('Delete Team', 'Are you sure you want to delete this team?', async () => {
