@@ -532,10 +532,7 @@
           </div>
           <div class="team-filter-tabs" id="calendar-team-tabs">
             <button class="team-filter-tab active" onclick="UI.setCalendarTeamFilter('all', this)">All Teams</button>
-            <button class="team-filter-tab" onclick="UI.setCalendarTeamFilter('team-1', this)">Team 1</button>
-            <button class="team-filter-tab" onclick="UI.setCalendarTeamFilter('team-2', this)">Team 2</button>
-            <button class="team-filter-tab" onclick="UI.setCalendarTeamFilter('team-3', this)">Team 3</button>
-            <button class="team-filter-tab" onclick="UI.setCalendarTeamFilter('team-4', this)">Team 4</button>
+            <!-- Dynamic team tabs will be loaded here -->
           </div>
           <div class="calendar-grid" id="calendar-grid"></div>
         </div>
@@ -551,10 +548,7 @@
         </div>
         <div class="team-filter-tabs" id="schedule-team-tabs">
           <button class="team-filter-tab active" onclick="UI.setScheduleTeamFilter('all', this)">All Teams</button>
-          <button class="team-filter-tab" onclick="UI.setScheduleTeamFilter('team-1', this)">Team 1</button>
-          <button class="team-filter-tab" onclick="UI.setScheduleTeamFilter('team-2', this)">Team 2</button>
-          <button class="team-filter-tab" onclick="UI.setScheduleTeamFilter('team-3', this)">Team 3</button>
-          <button class="team-filter-tab" onclick="UI.setScheduleTeamFilter('team-4', this)">Team 4</button>
+          <!-- Dynamic team tabs will be loaded here -->
         </div>
         <div class="form-section">
           <div class="search-bar">
@@ -1108,6 +1102,12 @@
                 <label>New Time Slot</label>
                 <input type="text" id="reschedule-time" placeholder="e.g., 9:00 AM">
               </div>
+              <div class="form-group">
+                <label>Change Team</label>
+                <select id="reschedule-team">
+                  <option value="">Keep Current Team</option>
+                </select>
+              </div>
             </div>
             <div class="form-group">
               <label>Reason *</label>
@@ -1165,11 +1165,7 @@
             <div class="form-group">
               <label>Assigned To</label>
               <select id="complaint-assigned">
-                <option value="">Select Person</option>
-                <option value="John">John</option>
-                <option value="Omar">Omar</option>
-                <option value="Alex">Alex</option>
-                <option value="Marjorie">Marjorie</option>
+                <option value="">Select Team/Person</option>
               </select>
             </div>
           </div>
@@ -1218,10 +1214,7 @@
             <div class="form-group">
               <label>Inspected By *</label>
               <select id="inspection-by" required>
-                <option value="">Select Person</option>
-                <option value="John">John</option>
-                <option value="Omar">Omar</option>
-                <option value="Alex">Alex</option>
+                <option value="">Select Team/Person</option>
               </select>
             </div>
           </div>
