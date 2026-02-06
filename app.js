@@ -901,8 +901,14 @@ const UI = {
   },
 
   async initDefaultTeams() {
-    // Teams should be created manually by admin users
-    // No default teams will be auto-created
+    // Intentionally do NOT seed or auto-create any teams on startup.
+    // Teams should be created by an administrator through the front-end (Teams modal).
+    // No-op to avoid accidental creation.
+    try {
+      return;
+    } catch (e) {
+      console.warn('initDefaultTeams no-op', e);
+    }
   },
 
   async loadTeamsToDropdown(selectId, includeEmpty = true) {
@@ -910,6 +916,16 @@ const UI = {
       const teams = await DB.getTeams();
       const select = document.getElementById(selectId);
       if (!select) return;
+      
+      // If there are no teams, show a placeholder (when includeEmpty) or clear the select.
+      if (!Array.isArray(teams) || teams.length === 0) {
+        if (includeEmpty) {
+          select.innerHTML = '<option value="">No teams configured</option>';
+        } else {
+          select.innerHTML = '';
+        }
+        return;
+      }
       
       if (includeEmpty) {
         select.innerHTML = '<option value="">Select Team</option>';
@@ -934,13 +950,15 @@ const UI = {
       const container = document.getElementById(containerId);
       if (!container) return;
       
-      // Keep the "All Teams" button
-      const allButton = container.querySelector('.team-filter-tab.active') || 
-                       container.querySelector('.team-filter-tab');
-      
+      // Keep the "All Teams" button (the first tab). If none exists, do nothing.
       // Clear all but first button
       while (container.children.length > 1) {
         container.removeChild(container.lastChild);
+      }
+
+      // If no teams configured, leave only the "All Teams" tab and return
+      if (!Array.isArray(teams) || teams.length === 0) {
+        return;
       }
       
       // Add team buttons
